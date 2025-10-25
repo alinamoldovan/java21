@@ -128,3 +128,15 @@ Nu funcționează cu reflexie pentru           (dar merge cu Spring/Weld CDI)
 instanțierea dinamică fără permis explicit
 
 
+2️⃣ De ce yield și nu return?
+
+Pentru că yield returnează o valoare dintr-o ramură a unui switch expression,
+dar nu părăsește metoda curentă.
+
+👉 return ar opri întreaga metodă.
+👉 yield doar “livrează” rezultatul ramurii curente către switch.
+
+3️⃣ În termeni simpli:
+Cuvânt cheie	Se aplică la	                    Efect
+return	        metoda curentă	                    iese complet din metodă
+yield	        doar din ramura switch expression	returnează valoarea acelei ramuri către switch
