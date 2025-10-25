@@ -1,6 +1,8 @@
 package com.example.sealedclassesandinterfaces;
 
-import org.springframework.boot.SpringApplication;
+import com.example.sealedclassesandinterfaces.task1.Circle;
+import com.example.sealedclassesandinterfaces.task1.Shape;
+import com.example.sealedclassesandinterfaces.task1.ShapeOperations;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication

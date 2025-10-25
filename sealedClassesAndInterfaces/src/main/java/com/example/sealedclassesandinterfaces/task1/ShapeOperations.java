@@ -1,4 +1,4 @@
-package com.example.sealedclassesandinterfaces;
+package com.example.sealedclassesandinterfaces.task1;
 
 public class ShapeOperations {
 
