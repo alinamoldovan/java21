@@ -182,6 +182,219 @@ https://docs.oracle.com/en/java/javase/21/language/index.html
 
 In many cases, this data is immutable, since immutability ensures the validity of the data without synchronization.
 
+Records are immutable data classes that require only the type and name of fields.
+We also receive public getters methods, whose names match the name of our field, for free.
+As with regular Java classes, we can also include static variables and methods in our records.
 
+
+This method returns true if the supplied object is of the same type and the values of all of its fields match:
+
+declaring a compact constructor and one with an argument list matching the generated constructor results in a compilation error.
 
 Implementations of the equals and hashCode methods, which specify that two record classes are equal if they are of the same type and contain equal component values.
+
+Perfect 👏 — hai să vedem un exemplu complet, profesionist, de integrare între o entitate JPA clasică (@Entity) și un record Java 21 (ProductDto) folosit ca data transfer object (DTO).
+
+Scenariul e exact ca într-un proiect enterprise (Spring/Jakarta + Hibernate/JPA).
+
+🧩 1️⃣ Entitatea JPA (mutabilă, gestionată de Hibernate)
+package com.example.domain;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "products")
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+    private double price;
+    private String category;
+
+    public Product() {
+        // Hibernate cere un constructor fără argumente
+    }
+
+    public Product(String name, double price, String category) {
+        this.name = name;
+        this.price = price;
+        this.category = category;
+    }
+
+    // Getteri și setteri
+    public Long getId() { return id; }
+    public String getName() { return name; }
+    public double getPrice() { return price; }
+    public String getCategory() { return category; }
+
+    public void setName(String name) { this.name = name; }
+    public void setPrice(double price) { this.price = price; }
+    public void setCategory(String category) { this.category = category; }
+}
+
+
+🔹 Important:
+
+Hibernate cere constructorul gol pentru instanțierea din DB.
+
+Câmpurile sunt mutabile.
+
+Obiectele Product sunt gestionate în contextul de persistență (când se face EntityManager.persist() sau find()).
+
+🧠 2️⃣ Record-ul Java 21 – DTO (imutabil)
+package com.example.dto;
+
+public record ProductDto(Long id, String name, double price, String category) {
+}
+
+
+🔹 Ce aduce record-ul:
+
+Fără boilerplate (equals, hashCode, toString generate automat)
+
+Imutabil → sigur de folosit în REST APIs
+
+Ideal pentru transfer (nu e gestionat de Hibernate)
+
+🔄 3️⃣ Mapper simplu între Entity ↔ DTO
+Varianta clasică (static factory methods):
+package com.example.mapper;
+
+import com.example.domain.Product;
+import com.example.dto.ProductDto;
+
+public class ProductMapper {
+
+    public static ProductDto toDto(Product entity) {
+        if (entity == null) return null;
+        return new ProductDto(entity.getId(), entity.getName(), entity.getPrice(), entity.getCategory());
+    }
+
+    public static Product toEntity(ProductDto dto) {
+        if (dto == null) return null;
+        Product product = new Product(dto.name(), dto.price(), dto.category());
+        // id-ul e gestionat de Hibernate, deci nu îl setăm manual
+        return product;
+    }
+}
+
+
+💡 Alternativ: poți folosi MapStruct pentru a genera automat conversiile.
+
+🌐 4️⃣ Service Layer – Folosirea record-ului în business logic
+package com.example.service;
+
+import com.example.domain.Product;
+import com.example.dto.ProductDto;
+import com.example.mapper.ProductMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class ProductService {
+
+    @PersistenceContext
+    private EntityManager em;
+
+    @Transactional
+    public ProductDto create(ProductDto dto) {
+        Product entity = ProductMapper.toEntity(dto);
+        em.persist(entity);
+        return ProductMapper.toDto(entity);
+    }
+
+    public List<ProductDto> findAll() {
+        List<Product> products = em.createQuery("SELECT p FROM Product p", Product.class)
+                                   .getResultList();
+        return products.stream()
+                       .map(ProductMapper::toDto)
+                       .collect(Collectors.toList());
+    }
+}
+
+
+🔹 Aici:
+
+Product e mutabil și gestionat de JPA.
+
+ProductDto e imutabil și perfect pentru returnare spre API/Frontend.
+
+Conversia e explicită și sigură.
+
+🧾 5️⃣ Controller REST (exemplu cu Jakarta REST)
+package com.example.api;
+
+import com.example.dto.ProductDto;
+import com.example.service.ProductService;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import java.util.List;
+
+@Path("/products")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+public class ProductResource {
+
+    @Inject
+    private ProductService service;
+
+    @POST
+    public ProductDto create(ProductDto dto) {
+        return service.create(dto);
+    }
+
+    @GET
+    public List<ProductDto> list() {
+        return service.findAll();
+    }
+}
+
+
+➡️ REST API expune doar record ProductDto către clientul web — codul e mai curat și mai sigur.
+
+🧠 6️⃣ Avantajele clare ale acestei separări
+Aspect	Entity (@Entity)	Record (DTO)
+Gestionat de Hibernate	✅ Da	❌ Nu
+Imutabil	❌ Nu	✅ Da
+Constructor fără argumente	✅ Da (obligatoriu)	✅ Implicit
+Ideal pentru	Persistență	Transfer (REST/API)
+Thread-safe	❌ Nu	✅ Da
+Cod boilerplate	Mare	Minim
+🧩 7️⃣ Extensie practică (bonus)
+
+Dacă folosești Spring Boot 3.2+ (Java 21-ready), poți returna direct record-uri în @RestController:
+
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+
+    private final ProductService service;
+
+    public ProductController(ProductService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public List<ProductDto> all() {
+        return service.findAll();
+    }
+}
+
+
+➡️ Spring serializează automat record-ul în JSON (ex. { "id": 1, "name": "Phone", ... }).
+
+🧩 Rezumatul logicii
+[DB] ⇄ Product (Entity) ⇄ ProductMapper ⇄ ProductDto (Record) ⇄ [REST/API]
+Hibernate manipulează entitatea.
+
+Record-ul oferă un view curat și sigur al datelor.
+
+Mapper-ul e podul între cele două lumi (mutable ↔ immutable).
+
