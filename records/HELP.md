@@ -180,4 +180,8 @@ https://docs.oracle.com/en/java/javase/21/language/index.html
 
 📘 Modern Java in Action – capitolul despre imutabilitate
 
+In many cases, this data is immutable, since immutability ensures the validity of the data without synchronization.
+
+
+
 Implementations of the equals and hashCode methods, which specify that two record classes are equal if they are of the same type and contain equal component values.
