@@ -2,6 +2,9 @@
 <project version="4">
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="patternMatchingAndRecordPatterns" options="-parameters" />
+      <module name="patternMatchingAndRecordPatterns.main" options="-parameters" />
+      <module name="patternMatchingAndRecordPatterns.test" options="-parameters" />
       <module name="records" options="-parameters" />
       <module name="records.main" options="-parameters" />
       <module name="records.test" options="-parameters" />

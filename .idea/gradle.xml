@@ -3,6 +3,14 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/patternMatchingAndRecordPatterns" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/patternMatchingAndRecordPatterns" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/records" />
         <option name="modules">
           <set>
